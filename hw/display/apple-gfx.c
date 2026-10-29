@@ -1031,7 +1031,15 @@ bool apple_gfx_common_realize(AppleGFXState *s, DeviceState *dev,
         return false;
     }
 
-    if (apple_gfx_mig_blocker == NULL) {
+    /*
+     * vphone-linux: REIMS_VGPU_ALLOW_MIGRATE=1 drops the migration blocker so
+     * the VM can be snapshot/migrated (debug fast-resume). The device still has
+     * no VMStateDescription, so this is sound only when the guest has not yet
+     * driven the GPU (a pre-graphics snapshot restored into a fresh process);
+     * a post-graphics snapshot needs reims suspend/resume wired (the TODO in
+     * apple_gfx_common_realize). Default: blocker stays, as upstream.
+     */
+    if (apple_gfx_mig_blocker == NULL && getenv("REIMS_VGPU_ALLOW_MIGRATE") == NULL) {
         error_setg(&apple_gfx_mig_blocker,
                   "Migration state blocked by apple-gfx display device");
         if (migrate_add_blocker(&apple_gfx_mig_blocker, errp) < 0) {
