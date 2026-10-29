@@ -678,9 +678,9 @@ GArray *apple_gfx_new_memory_ranges(GArray **files)
  * On Linux the library builds its views of guest pages from these files, so
  * there a range without one fails the realize.
  */
-static bool apple_gfx_memory_files(GArray *ranges, GArray *files,
-                                   const RvgMemoryRangeFile **memory_files,
-                                   Error **errp)
+bool apple_gfx_memory_files(GArray *ranges, GArray *files,
+                            const RvgMemoryRangeFile **memory_files,
+                            Error **errp)
 {
     guint i;
 

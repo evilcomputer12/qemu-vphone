@@ -98,8 +98,17 @@ static void apple_gfx_mmio_iosfc_raise_interrupt_cb(void *ctx, uint32_t vector)
 static bool apple_gfx_mmio_create_iosurface_device(AppleGFXMMIOState *s,
                                                    Error **errp)
 {
-    /* The library copies the ranges. */
-    g_autoptr(GArray) memory_ranges = apple_gfx_new_memory_ranges(NULL);
+    /*
+     * The library copies the ranges and duplicates the files' descriptors.
+     * vphone-linux: the IOSurface device must get the files (the guest-RAM
+     * memfd behind each range), as the graphics device does, or on Linux it
+     * cannot map the guest's IOSurface descriptor table and ring (the display
+     * stays black). Same ranges as apple_gfx_common_realize built, so the
+     * memory-backend-memfd check there has already passed.
+     */
+    g_autoptr(GArray) memory_files = NULL;
+    g_autoptr(GArray) memory_ranges = apple_gfx_new_memory_ranges(&memory_files);
+    const RvgMemoryRangeFile *files = NULL;
     RvgMemoryMap memory_map = {
         .ranges = (const RvgMemoryRange *)memory_ranges->data,
         .range_count = memory_ranges->len,
@@ -109,13 +118,19 @@ static bool apple_gfx_mmio_create_iosurface_device(AppleGFXMMIOState *s,
         .ctx = s,
         .raise_interrupt = apple_gfx_mmio_iosfc_raise_interrupt_cb,
     };
+    RvgStatus status;
+
+    if (!apple_gfx_memory_files(memory_ranges, memory_files, &files, errp)) {
+        return false;
+    }
+
     RvgIOSurfaceDeviceConfig config = {
         .struct_size = sizeof(config),
         .memory_map = &memory_map,
         .callbacks = &callbacks,
         .guest_page_shift = s->guest_page_shift,
+        .memory_files = files,
     };
-    RvgStatus status;
 
     status = rvg_iosurface_device_create(&config, &s->pgiosfc);
     if (status != RVG_OK) {

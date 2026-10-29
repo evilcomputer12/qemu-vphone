@@ -118,6 +118,16 @@ void apple_gfx_activity_end(void);
  */
 GArray *apple_gfx_new_memory_ranges(GArray **files);
 
+/*
+ * Validates @files (one RvgMemoryRangeFile per range of @ranges) and, on
+ * success, points *@memory_files at them. On Linux a range without a shared
+ * file mapping is an error; elsewhere *@memory_files is set to NULL (the files
+ * are not used). Shared by the graphics device and the MMIO IOSurface device.
+ */
+bool apple_gfx_memory_files(GArray *ranges, GArray *files,
+                            const RvgMemoryRangeFile **memory_files,
+                            Error **errp);
+
 extern const PropertyInfo qdev_prop_apple_gfx_display_mode;
 
 #endif
