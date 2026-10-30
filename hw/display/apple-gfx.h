@@ -80,6 +80,12 @@ struct AppleGFXState {
     bool window;
     /* Realize began a hold on the activity against App Nap. */
     bool holds_activity;
+    /*
+     * vphone-linux: the variant drives reims suspend/resume through a
+     * VMStateDescription, so apple_gfx_common_realize adds no migration
+     * blocker. Set before apple_gfx_common_realize.
+     */
+    bool migratable;
     AppleGFXDisplay displays[RVG_MAX_DISPLAY_PORTS];
 
     /*
