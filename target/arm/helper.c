@@ -247,7 +247,14 @@ void init_cpreg_list(ARMCPU *cpu)
     cpu->cpreg_values = g_new(uint64_t, arraylen);
     cpu->cpreg_vmstate_indexes = g_new(uint64_t, arraylen);
     cpu->cpreg_vmstate_values = g_new(uint64_t, arraylen);
-    cpu->cpreg_vmstate_array_len = cpu->cpreg_array_len;
+    /*
+     * vphone-linux: arraylen, not cpu->cpreg_array_len, which still holds the
+     * previous count here (0 on the first call) and is only recomputed below.
+     * Leaving the stale value made cpreg_vmstate_array_len 0 on a freshly
+     * realized CPU, so an inbound migration failed cpu:cpreg_vmstate_array_len
+     * ("Invalid value N expecting positive value <= 0").
+     */
+    cpu->cpreg_vmstate_array_len = arraylen;
 
     cpreg_key_array_algo_sort(key_array);
 
